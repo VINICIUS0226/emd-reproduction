@@ -1,0 +1,11 @@
+random_state: 42
+models:
+  - logistic_regression
+  - linear_svm
+  - random_forest
+  - knn
+features:
+  analyzer: char_wb
+  ngram_range: [3, 5]
+  max_features: 50000
+
