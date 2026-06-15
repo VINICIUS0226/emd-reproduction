@@ -92,4 +92,8 @@ Para TCC, artigo de disciplina ou relatorio, use:
 - `docs/paper_summary.md` para explicar o artigo;
 - `docs/reproduction_plan.md` para justificar o protocolo;
 - `docs/limitations.md` para declarar modelos nao executados e motivos.
+- `docs/local_results.md` para relatar a execucao local dos baselines leves.
 
+
+
+Nota sobre os dados: no pacote atual dos autores, os splits sao `Mutant_A_hierarchical.csv` e `Mutant_B_hierarchical.csv`. O script usa A como treino e B como teste.

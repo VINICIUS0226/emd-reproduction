@@ -11,7 +11,7 @@
 
 - Baixar o repositorio `tianzhaotju/EMD`.
 - Ler `MutantBench_code_db_java.csv`.
-- Ler os arquivos de treino e teste.
+- Ler os arquivos de treino e teste. No pacote atual dos autores, eles aparecem como `Mutant_A_hierarchical.csv` e `Mutant_B_hierarchical.csv`; este repositorio usa A como treino e B como teste.
 - Resolver `code_id_1` e `code_id_2` para os respectivos metodos Java.
 - Gerar `train.csv` e `test.csv` normalizados.
 
@@ -37,4 +37,5 @@
 - Adicionar SentenceTransformers local.
 - Adicionar CodeBERT/UniXCoder somente para inferencia de embeddings.
 - Rodar fine-tuning pequeno se houver GPU.
+
 

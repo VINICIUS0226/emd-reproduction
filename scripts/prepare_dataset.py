@@ -22,6 +22,19 @@ def find_csv(root: Path, include: list[str], exclude: list[str] | None = None) -
     return sorted(candidates, key=lambda p: len(str(p)))[0]
 
 
+def find_pair_split(root: Path, split: str) -> Path:
+    try:
+        return find_csv(root, [split])
+    except FileNotFoundError:
+        fallback = {
+            "train": "Mutant_A_hierarchical.csv",
+            "test": "Mutant_B_hierarchical.csv",
+        }[split]
+        path = root / fallback
+        if path.exists():
+            return path
+        raise
+
 def normalize_pairs(pairs: pd.DataFrame, code_db: pd.DataFrame) -> pd.DataFrame:
     required_pairs = {"id", "code_id_1", "code_id_2", "label"}
     required_code = {"id", "code"}
@@ -65,8 +78,8 @@ def main() -> None:
         raise FileNotFoundError(f"Pasta dataset nao encontrada: {dataset_root}")
 
     code_db_path = find_csv(dataset_root, ["code", "db"])
-    train_path = find_csv(dataset_root, ["train"])
-    test_path = find_csv(dataset_root, ["test"])
+    train_path = find_pair_split(dataset_root, "train")
+    test_path = find_pair_split(dataset_root, "test")
 
     code_db = pd.read_csv(code_db_path)
     train_pairs = pd.read_csv(train_path)
@@ -84,4 +97,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 
