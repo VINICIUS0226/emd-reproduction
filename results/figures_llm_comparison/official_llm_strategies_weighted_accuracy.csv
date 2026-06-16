@@ -1,0 +1,6 @@
+method,accuracy,correct,total
+Fine-tuned Code Embedding,0.9330649219929542,1854,1987
+Pre-trained Code Embedding,0.9214896829391042,1831,1987
+Fine-tuning with Instruction,0.9204831404126824,1829,1987
+Few-shot Prompting,0.8525415198792149,1694,1987
+Zero-shot Prompting,0.7856064418721691,1561,1987

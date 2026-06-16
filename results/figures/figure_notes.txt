@@ -1,0 +1,5 @@
+Resultados gerados a partir dos splits processados em data/processed.
+Treino: 1652 pares.
+Teste: 1650 pares.
+Melhor baseline por F1: KNN com F1=0.7208, accuracy=0.9291, precision=0.8882, recall=0.6064.
+Arquivos principais: baseline_metrics_comparison.png, baseline_f1_ranking.png, baseline_confusion_matrices.png, dataset_class_distribution.png, baseline_summary_table.png.

@@ -1,0 +1,6 @@
+Comparacao gerada a partir dos CSVs oficiais do pacote do artigo e dos baselines locais reproduzidos.
+Os percentuais oficiais por operador foram agregados por media ponderada usando os contadores correto/total.
+Inferencia LLM real nao foi executada neste ambiente: nao ha torch/transformers/openai, chave OPENAI_API_KEY ou checkpoints locais.
+Comparacao local por operador nao foi gerada porque o pacote local disponivel nao inclui a coluna de operador nos pares/codigo.
+Melhor estrategia LLM oficial agregada: Fine-tuned Code Embedding = 0.9331.
+Melhor baseline local por accuracy: Local KNN = 0.9291.
