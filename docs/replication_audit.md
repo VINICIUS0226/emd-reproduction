@@ -1,103 +1,112 @@
-# Auditoria da replicacao
+# Auditoria da Replicacao
 
-Esta auditoria resume o estado atual da replicacao local do artigo
-"Large Language Models for Equivalent Mutant Detection: How Far Are We?".
+Este documento resume os artefatos executados neste repositorio para a replicacao
+parcial de Equivalent Mutant Detection (EMD) com baselines leves e comparacao com
+resultados oficiais de LLMs.
 
-## O que foi reproduzido localmente
+## Dados
 
-- Preparacao dos dados a partir do pacote dos autores.
-- Uso dos splits `Mutant_A_hierarchical.csv` como treino e `Mutant_B_hierarchical.csv` como teste.
-- Treinamento e avaliacao em CPU dos baselines leves:
-  - Logistic Regression;
-  - Linear SVM;
-  - Random Forest;
-  - KNN.
-- Geracao de metricas locais:
-  - accuracy;
-  - precision;
-  - recall;
-  - F1;
-  - matriz de confusao;
-  - predicoes por exemplo.
-- Geracao de figuras em PNG/PDF para uso no artigo em `results/figures`.
+- Fonte: pacote oficial `tianzhaotju/EMD`.
+- Treino: `Mutant_A_hierarchical.csv`, com 1652 pares.
+- Teste: `Mutant_B_hierarchical.csv`, com 1650 pares.
+- Base de codigo: `MutantBench_code_db_java.csv`.
+- Dados processados:
+  - `data/processed/train.csv`;
+  - `data/processed/test.csv`.
 
-## O que foi comparado, mas nao reexecutado
+## Execucoes Locais
 
-Os resultados de LLMs foram comparados a partir dos CSVs oficiais presentes no
-pacote de replicacao dos autores:
+Foram executados localmente em CPU:
+
+- Logistic Regression;
+- Linear SVM;
+- Random Forest;
+- KNN;
+- `tce_proxy`;
+- checkpoint oficial `Text-Embedding-3-Small`.
+
+O ambiente de execucao esta registrado em:
+
+- `results/environment/environment.json`;
+- `results/environment/environment.md`.
+
+## Resultados Locais
+
+| Metodo | Accuracy | Precision | Recall | F1 | Media |
+| --- | ---: | ---: | ---: | ---: | --- |
+| KNN | 0.9291 | 0.8882 | 0.6064 | 0.7208 | Binaria |
+| Random Forest | 0.8964 | 0.6393 | 0.7189 | 0.6767 | Binaria |
+| Text-Embedding-3-Small checkpoint | 0.9121 | 1.0000 | 0.4177 | 0.5892 | Binaria |
+| Linear SVM | 0.8612 | 0.5336 | 0.6386 | 0.5814 | Binaria |
+| Logistic Regression | 0.8436 | 0.4866 | 0.6586 | 0.5597 | Binaria |
+| TCE proxy | 0.8491 | 0.0000 | 0.0000 | 0.0000 | Binaria |
+| Text-Embedding-3-Small checkpoint | 0.9121 | 0.9531 | 0.7088 | 0.7700 | Macro |
+
+Arquivos consolidados:
+
+- `results/final_summary/model_summary.csv`;
+- `results/final_summary/executed_methods_summary.png`;
+- `results/final_summary/executed_methods_summary.pdf`.
+
+## Checkpoint Oficial Executado
+
+Foi baixado do Zenodo o pacote:
+
+- `Text_Embedding_small_3.zip`.
+
+Ele foi armazenado em:
+
+- `external/EMD/downloaded_checkpoints/Text_Embedding_small_3.zip`.
+
+Os arquivos extraidos e usados na execucao foram:
+
+- `external/EMD/Text-Embedding-3-Small/saved_models/checkpoints/text-embedding-3-small.bin`;
+- `external/EMD/Text-Embedding-3-Small/saved_models/embeddings/text-embedding-3-small.npy`.
+
+Resultados:
+
+- `results/official_text_embedding_small/metrics.json`;
+- `results/official_text_embedding_small/predictions.csv`;
+- `results/official_text_embedding_small/confusion_matrix.csv`.
+
+## API OpenAI
+
+Foi preparada uma amostra estratificada com 20 pares:
+
+- `results/openai_stratified_sample/sample.csv`.
+
+Tambem foi registrado o template de prompt:
+
+- `results/openai_stratified_sample/prompt_template.txt`.
+
+Na execucao registrada, chamadas de API nao foram feitas porque a variavel
+`OPENAI_API_KEY` nao estava configurada. O manifesto da execucao esta em:
+
+- `results/openai_stratified_sample/run_info.json`.
+
+## Comparacoes com Resultados Oficiais
+
+Os resultados oficiais de LLMs foram agregados a partir dos arquivos:
 
 - `external/EMD/results/LLM_strategies_all_operators.csv`;
 - `external/EMD/results/EMD_categories_all_operators.csv`.
 
-As figuras correspondentes foram geradas em `results/figures_llm_comparison`.
-Esses graficos devem ser descritos como comparacao com resultados oficiais do
-pacote original, nao como inferencia LLM reexecutada neste ambiente.
+Esses valores sao usados como referencia externa do artigo original.
 
-## Por que os LLMs nao foram reexecutados
+Principais saidas:
 
-No ambiente local auditado nao estavam disponiveis:
+- `results/figures_llm_comparison/official_llm_strategies_weighted_accuracy.csv`;
+- `results/figures_llm_comparison/official_categories_vs_local_baselines_accuracy.csv`;
+- `results/figures_llm_comparison/official_llm_top10_operator_heatmap.png`.
 
-- `torch`;
-- `transformers`;
-- `openai`;
-- variavel `OPENAI_API_KEY`;
-- checkpoints `.bin`, `.pt`, `.pth`, `.npy`, `.safetensors` ou `.ckpt` dos modelos.
+## Observacoes Metodologicas
 
-O README do pacote original tambem recomenda GPU com pelo menos 48 GB de memoria
-para os LLMs open-source maiores. Modelos fechados, como GPT-3.5/GPT-4 e
-embeddings da OpenAI, exigem chave de API e custo de uso.
-
-## Divergencia importante encontrada
-
-O split local de teste tem 1650 pares. Entretanto, os CSVs oficiais por operador
-somam 1987 ocorrencias ao agregar os denominadores reportados em cada operador.
-Por isso, os graficos oficiais por operador nao devem ser tratados como uma
-avaliacao local sobre exatamente o mesmo `test.csv` processado neste repositorio.
-
-Essa diferenca deve ser explicada no artigo como uma limitacao da comparacao:
-os baselines locais foram reexecutados no split local, enquanto os resultados por
-operador de LLMs foram extraidos dos artefatos oficiais agregados do artigo.
-
-## Lacunas restantes para uma replicacao mais forte
-
-1. Reexecutar pelo menos um LLM pequeno ou embedding local.
-   - Exemplo viavel: CodeBERT/UniXCoder em modo de embedding, se houver GPU ou tempo
-     aceitavel em CPU.
-   - Exige instalar `torch` e `transformers`, alem de baixar o modelo/checkpoint.
-
-2. Reexecutar GPT/embeddings da OpenAI por amostragem.
-   - Exige `OPENAI_API_KEY` e custo de API.
-   - Recomendado usar uma amostra estratificada e registrar prompt, modelo, data e custo.
-
-3. Obter checkpoints oficiais do Zenodo.
-   - Necessario para testar os modelos fine-tuned dos autores.
-   - Sem checkpoints, os scripts `test.py` dos modelos LLM nao reproduzem os resultados
-     fine-tuned.
-
-4. Preservar metadados de operador no dataset processado.
-   - A copia local de `MutantBench_code_db_java.csv` contem apenas `id` e `code`.
-   - Sem operador, nao e possivel calcular resultados locais por operador de mutacao.
-
-5. Registrar ambiente de execucao.
-   - Versao do Python;
-   - versoes de dependencias;
-   - sistema operacional;
-   - CPU/GPU;
-   - tempo aproximado de execucao.
-
-6. Adicionar uma secao de ameacas a validade.
-   - Comparacao parcial;
-   - ausencia de fine-tuning LLM;
-   - diferenca entre resultados locais e agregados oficiais;
-   - dependencia de artefatos publicados pelos autores.
-
-## Formulacao recomendada para o artigo
-
-> Realizamos uma replicacao parcial sob restricoes de hardware e custo. O pipeline
-> de dados e os baselines leves foram reexecutados localmente em CPU. Para os
-> LLMs, como os checkpoints fine-tuned e as APIs pagas nao estavam disponiveis,
-> comparamos os resultados locais com os resultados oficiais agregados fornecidos
-> no pacote de replicacao dos autores. Portanto, os resultados de LLMs devem ser
-> interpretados como referencia externa do estudo original, e nao como inferencia
-> reexecutada nesta infraestrutura.
+- O `tce_proxy` e deterministico e conservador, mas nao compila os projetos Java.
+  Ele marca equivalencia apenas quando os fragmentos normalizados sao identicos.
+- O checkpoint `Text-Embedding-3-Small` foi executado localmente com PyTorch CPU.
+- Os resultados oficiais por operador somam 1987 ocorrencias ao agregar os
+  denominadores, enquanto o split local de teste tem 1650 pares.
+- Por essa diferenca, resultados oficiais por operador devem ser interpretados
+  como referencia agregada do pacote original, nao como metricas locais sobre o
+  mesmo `test.csv`.
 

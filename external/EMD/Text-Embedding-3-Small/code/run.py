@@ -12,7 +12,12 @@ import torch
 from torch import nn
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
-from transformers import get_linear_schedule_with_warmup, AdamW
+from transformers import get_linear_schedule_with_warmup
+
+try:
+    from transformers import AdamW
+except ImportError:
+    from torch.optim import AdamW
 logger = logging.getLogger(__name__)
 
 
