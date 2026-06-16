@@ -83,6 +83,15 @@ python scripts/prepare_dataset.py --author-repo external/EMD --out data/processe
 python -m src.emd_repro.train_baselines --data data/processed --out results/baselines
 ```
 
+5. Gerar figuras de comparacao com os resultados oficiais de LLMs do pacote original:
+
+```bash
+python scripts/generate_llm_comparison_figures.py
+```
+
+As figuras locais ficam em `results/figures` e as comparacoes com resultados
+oficiais de LLMs ficam em `results/figures_llm_comparison`.
+
 ## Como interpretar
 
 O artigo reporta que estrategias baseadas em LLM superam baselines tradicionais, e que a melhor combinacao foi UniXCoder com embeddings fine-tuned. Este repositorio nao tenta mascarar limitacoes de recurso: os resultados produzidos aqui devem ser apresentados como reproducao parcial e estudo de viabilidade.
@@ -93,6 +102,8 @@ Para TCC, artigo de disciplina ou relatorio, use:
 - `docs/reproduction_plan.md` para justificar o protocolo;
 - `docs/limitations.md` para declarar modelos nao executados e motivos.
 - `docs/local_results.md` para relatar a execucao local dos baselines leves.
+- `docs/replication_audit.md` para separar o que foi reexecutado localmente do
+  que foi apenas comparado com artefatos oficiais dos autores.
 
 
 
