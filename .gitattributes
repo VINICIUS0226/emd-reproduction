@@ -1,0 +1,9 @@
+.venv/ export-ignore
+__pycache__/ export-ignore
+*.pyc export-ignore
+.pytest_cache/ export-ignore
+.mypy_cache/ export-ignore
+.env export-ignore
+*.log export-ignore
+.DS_Store export-ignore
+results/environment/environment.json export-ignore

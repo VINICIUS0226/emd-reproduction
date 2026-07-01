@@ -1,0 +1,233 @@
+\documentclass[sigconf,screen,nonacm]{acmart}
+
+\usepackage[brazil]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{booktabs}
+\usepackage{pgfplots}
+\usepackage{tikz}
+\usepackage{subcaption}
+
+\pgfplotsset{compat=1.18}
+\settopmatter{printacmref=false, printccs=false, printfolios=true}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+\pagestyle{plain}
+
+\title{Avaliando Custo e Eficacia de Modelos de Linguagem na Deteccao de Mutantes Equivalentes}
+
+\author{Anonymous Author(s)}
+\affiliation{%
+  \institution{Anonymous Institution}
+  \city{Anonymous City}
+  \country{Anonymous Country}
+}
+\email{anonymous@example.com}
+
+\begin{abstract}
+Mutantes equivalentes permanecem um obstaculo pratico para teste de mutacao, pois nao podem ser diferenciados do programa original por casos de teste e elevam o custo de analise manual. Este trabalho apresenta uma replicacao parcial do estudo de Zhao et al. sobre Large Language Models (LLMs) para Equivalent Mutant Detection (EMD), combinando execucoes locais em CPU com comparacoes documentadas a partir dos artefatos oficiais. Reproduzimos o fluxo de dados do MutantBench, treinamos quatro baselines supervisionados leves, avaliamos um baseline deterministico conservador e executamos localmente o checkpoint oficial Text-Embedding-3-Small. O melhor baseline local foi KNN com acuracia de 0,9291 e F1 de 0,7208 para a classe equivalente, resultado proximo da melhor categoria oficial baseada em LLMs, cuja acuracia ponderada agregada foi 0,9331. Os resultados indicam que baselines simples e reprodutiveis podem ser competitivos em acuracia, embora ainda apresentem limitacoes relevantes de revocacao para mutantes equivalentes.
+\end{abstract}
+
+\keywords{teste de mutacao, mutantes equivalentes, LLM, reproducao, aprendizado de maquina}
+
+\begin{document}
+\maketitle
+
+\section{Introducao}
+
+Teste de mutacao avalia a qualidade de suites de teste pela introducao de pequenas alteracoes sintaticas no programa. Um mutante e considerado morto quando ao menos um teste distingue seu comportamento do programa original. Mutantes equivalentes, por outro lado, preservam o comportamento observavel para todas as entradas possiveis e nao podem ser mortos por novos testes. Essa caracteristica distorce o mutation score e aumenta o esforco humano necessario para analisar resultados.
+
+O estudo de Zhao et al.~\cite{zhao2024emd} investiga o uso de Large Language Models (LLMs) para Equivalent Mutant Detection (EMD). O artigo original compara tecnicas baseadas em compiladores, redes neurais sobre arvores, modelos supervisionados tradicionais e diferentes estrategias com LLMs, incluindo embeddings pre-treinados, embeddings ajustados, prompting e fine-tuning por instrucao.
+
+Este trabalho tem dois objetivos. Primeiro, reproduzir uma parte executavel do pipeline em ambiente comum de CPU. Segundo, sintetizar os resultados de forma adequada para submissao curta, deixando explicitas as diferencas entre resultados executados localmente e numeros oficiais usados apenas como referencia externa.
+
+\section{Metodologia}
+
+\subsection{Dados}
+
+Utilizamos o pacote publico do estudo original, baseado no MutantBench. O conjunto possui pares de metodos Java rotulados como equivalentes (\(1\)) ou nao equivalentes (\(0\)). Mantivemos os splits do pacote dos autores: \texttt{Mutant\_A\_hierarchical.csv} para treino e \texttt{Mutant\_B\_hierarchical.csv} para teste. O treino contem 1.652 pares e o teste contem 1.650 pares.
+
+\begin{figure}[t]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      ybar,
+      width=\linewidth,
+      height=4.1cm,
+      ymin=0,
+      ylabel={Pares},
+      symbolic x coords={Treino,Teste},
+      xtick=data,
+      bar width=11pt,
+      legend style={at={(0.5,1.05)},anchor=south,legend columns=2},
+      nodes near coords,
+      nodes near coords align={vertical},
+      every node near coord/.append style={font=\scriptsize},
+      enlarge x limits=0.35
+    ]
+      \addplot coordinates {(Treino,1402) (Teste,1401)};
+      \addplot coordinates {(Treino,250) (Teste,249)};
+      \legend{Nao equivalente,Equivalente}
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Distribuicao de classes nos splits oficiais usados na replicacao.}
+  \label{fig:classes}
+\end{figure}
+
+A Figura~\ref{fig:classes} mostra que o problema e desbalanceado: aproximadamente 85\% dos pares pertencem a classe nao equivalente em ambos os splits. Por isso, alem da acuracia, reportamos precisao, revocacao e F1 para a classe equivalente.
+
+\subsection{Modelos avaliados}
+
+Foram executados localmente quatro baselines supervisionados: Regressao Logistica, SVM Linear, Random Forest e KNN. A representacao textual concatena os dois metodos Java de cada par e usa TF-IDF com n-gramas de caracteres. Essa escolha preserva padroes lexicais locais do codigo e permite execucao em CPU.
+
+Tambem avaliamos um baseline deterministico, chamado \texttt{tce\_proxy}. Ele classifica como equivalente apenas pares cujo codigo fica identico apos normalizacao simples de comentarios e espacos. O metodo e propositalmente conservador e nao substitui uma implementacao completa de deteccao por compilacao.
+
+Por fim, executamos em CPU o checkpoint oficial Text-Embedding-3-Small disponibilizado no pacote dos autores. As comparacoes com estrategias LLM completas usam os CSVs oficiais publicados, pois a reproducao integral exigiria GPU de maior capacidade ou chamadas pagas de API.
+
+\section{Resultados}
+
+\subsection{Desempenho local}
+
+A Tabela~\ref{tab:metricas} resume os resultados executados localmente. O KNN obteve o maior F1 binario para a classe equivalente (0,7208) e a maior acuracia local (0,9291). Random Forest apresentou maior revocacao (0,7189), mas com menor precisao. O checkpoint Text-Embedding-3-Small teve precisao perfeita para a classe equivalente, mas revocacao menor, indicando comportamento mais conservador.
+
+\begin{table}[t]
+  \centering
+  \caption{Metricas locais no split de teste.}
+  \label{tab:metricas}
+  \small
+  \begin{tabular}{lrrrr}
+    \toprule
+    Metodo & Acc. & Prec. & Rec. & F1 \\
+    \midrule
+    KNN & 0,9291 & 0,8882 & 0,6064 & 0,7208 \\
+    Random Forest & 0,8964 & 0,6393 & 0,7189 & 0,6767 \\
+    Text-Emb.-3-Small & 0,9121 & 1,0000 & 0,4177 & 0,5892 \\
+    SVM Linear & 0,8612 & 0,5336 & 0,6386 & 0,5814 \\
+    Reg. Logistica & 0,8436 & 0,4866 & 0,6586 & 0,5597 \\
+    TCE proxy & 0,8491 & 0,0000 & 0,0000 & 0,0000 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[t]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      ybar,
+      width=\linewidth,
+      height=5.0cm,
+      ymin=0,
+      ymax=1.08,
+      ylabel={Valor},
+      symbolic x coords={KNN,RF,Emb,SVM,LR,TCE},
+      xtick=data,
+      xticklabel style={font=\scriptsize},
+      legend style={at={(0.5,1.05)},anchor=south,legend columns=4,font=\scriptsize},
+      bar width=4pt,
+      enlarge x limits=0.12
+    ]
+      \addplot coordinates {(KNN,0.9291) (RF,0.8964) (Emb,0.9121) (SVM,0.8612) (LR,0.8436) (TCE,0.8491)};
+      \addplot coordinates {(KNN,0.8882) (RF,0.6393) (Emb,1.0000) (SVM,0.5336) (LR,0.4866) (TCE,0.0000)};
+      \addplot coordinates {(KNN,0.6064) (RF,0.7189) (Emb,0.4177) (SVM,0.6386) (LR,0.6586) (TCE,0.0000)};
+      \addplot coordinates {(KNN,0.7208) (RF,0.6767) (Emb,0.5892) (SVM,0.5814) (LR,0.5597) (TCE,0.0000)};
+      \legend{Acc.,Prec.,Rec.,F1}
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Comparacao das metricas dos metodos executados localmente. RF: Random Forest; Emb: Text-Embedding-3-Small; LR: Regressao Logistica.}
+  \label{fig:metricas}
+\end{figure}
+
+A Figura~\ref{fig:metricas} evidencia que acuracia isolada pode ser enganosa em EMD. O \texttt{tce\_proxy}, por exemplo, alcanca 0,8491 de acuracia porque prediz todos os exemplos como nao equivalentes, mas falha completamente na classe de interesse. Assim, o F1 para equivalentes e uma medida mais informativa para comparar metodos.
+
+\subsection{Matrizes de confusao}
+
+Para manter o artigo dentro do limite de seis paginas, reportamos apenas duas matrizes de confusao: o melhor baseline local por F1 e o checkpoint oficial executado em CPU. O KNN identificou 151 dos 249 equivalentes do teste e produziu 19 falsos positivos. O Text-Embedding-3-Small nao gerou falsos positivos, mas detectou apenas 104 equivalentes.
+
+\begin{figure}[t]
+  \centering
+  \begin{subfigure}{0.48\linewidth}
+    \centering
+    \begin{tabular}{lrr}
+      \toprule
+       & Pred. 0 & Pred. 1 \\
+      \midrule
+      Real 0 & 1382 & 19 \\
+      Real 1 & 98 & 151 \\
+      \bottomrule
+    \end{tabular}
+    \caption{KNN}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.48\linewidth}
+    \centering
+    \begin{tabular}{lrr}
+      \toprule
+       & Pred. 0 & Pred. 1 \\
+      \midrule
+      Real 0 & 1401 & 0 \\
+      Real 1 & 145 & 104 \\
+      \bottomrule
+    \end{tabular}
+    \caption{Text-Embedding-3-Small}
+  \end{subfigure}
+  \caption{Matrizes de confusao representativas no split de teste. A classe 1 corresponde a pares equivalentes.}
+  \label{fig:confusao}
+\end{figure}
+
+\subsection{Comparacao com resultados oficiais}
+
+A Tabela~\ref{tab:oficiais} apresenta a comparacao entre os melhores resultados locais e as categorias oficiais agregadas do pacote original. Esses valores oficiais foram calculados a partir dos arquivos \texttt{LLM\_strategies\_all\_operators.csv} e \texttt{EMD\_categories\_all\_operators.csv}, usando media ponderada por contadores de acertos e totais.
+
+\begin{table}[t]
+  \centering
+  \caption{Acuracia local e acuracia oficial agregada.}
+  \label{tab:oficiais}
+  \small
+  \begin{tabular}{lr}
+    \toprule
+    Metodo ou categoria & Acuracia \\
+    \midrule
+    LLM-based oficial & 0,9331 \\
+    KNN local & 0,9291 \\
+    Random Forest local & 0,8964 \\
+    ML-based oficial & 0,8782 \\
+    SVM Linear local & 0,8612 \\
+    Regressao Logistica local & 0,8436 \\
+    Tree-based NN oficial & 0,8279 \\
+    Compiler-based oficial & 0,6714 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Entre as estrategias oficiais com LLM, a melhor acuracia ponderada foi obtida por embeddings de codigo ajustados (0,9331), seguida por embeddings de codigo pre-treinados (0,9215), fine-tuning por instrucao (0,9205), few-shot prompting (0,8525) e zero-shot prompting (0,7856). O melhor baseline local ficou muito proximo da melhor categoria oficial em acuracia, mas sua revocacao para equivalentes ainda deixa quase 40\% dessa classe sem deteccao.
+
+\section{Discussao}
+
+Os resultados sugerem tres observacoes principais. Primeiro, baselines leves com TF-IDF e classificadores tradicionais continuam relevantes como ponto de comparacao: eles sao baratos, auditaveis e reproduziveis. Segundo, a classe equivalente exige metricas alem da acuracia, pois o desbalanceamento favorece modelos que evitam predizer equivalencia. Terceiro, a comparacao com LLMs precisa separar claramente inferencia reproduzida de numeros oficiais agregados; do contrario, corre-se o risco de superestimar a cobertura experimental da replicacao.
+
+Do ponto de vista de custo, todos os baselines locais foram executados em CPU. O ambiente registrado usou Python 3.10.5, scikit-learn 1.7.2, PyTorch 2.12.0 em CPU e 12 CPUs logicas. A amostra para API OpenAI foi preparada, mas chamadas externas nao foram executadas porque a variavel \texttt{OPENAI\_API\_KEY} nao estava configurada.
+
+\section{Ameacas a Validade}
+
+Esta e uma reproducao parcial sob restricoes de hardware e custo. Nao executamos GPT-3.5, GPT-4, Code Llama, StarCoder, CodeT5+ nem fine-tuning completo de modelos grandes. Alem disso, os resultados oficiais por operador somam 1.987 ocorrencias ao agregar denominadores, enquanto o split local de teste possui 1.650 pares. Assim, as comparacoes oficiais devem ser lidas como referencia externa agregada, nao como metricas obtidas exatamente sobre o mesmo arquivo de teste local.
+
+O \texttt{tce\_proxy} e uma aproximacao conservadora e textual; ele nao compila projetos Java nem prova equivalencia semantica. Por fim, os baselines supervisionados dependem da representacao textual escolhida, e variantes de pre-processamento podem alterar os resultados.
+
+\section{Conclusao}
+
+Esta replicacao parcial reproduziu o fluxo de dados do estudo original, executou baselines locais e validou o checkpoint oficial Text-Embedding-3-Small em CPU. O KNN foi o melhor baseline local, com acuracia de 0,9291 e F1 de 0,7208 para mutantes equivalentes. Embora esse resultado se aproxime da melhor categoria oficial baseada em LLMs em acuracia, a analise de matriz de confusao mostra que a deteccao de equivalentes ainda e incompleta. Para trabalhos futuros, a extensao natural e executar embeddings ajustados e modelos maiores em ambiente com GPU, mantendo o mesmo protocolo de avaliacao e os artefatos de reproducao aqui organizados.
+
+% Acknowledgments omitted for anonymous review.
+
+\bibliographystyle{ACM-Reference-Format}
+\begin{thebibliography}{1}
+
+\bibitem{zhao2024emd}
+Zhao Tian, Honglin Shu, Dong Wang, Xuejie Cao, Yasutaka Kamei, and Junjie Chen.
+\newblock 2024.
+\newblock Large Language Models for Equivalent Mutant Detection: How Far Are We?
+\newblock In \emph{Proceedings of the ACM SIGSOFT International Symposium on Software Testing and Analysis (ISSTA)}.
+
+\end{thebibliography}
+
+\end{document}
+
